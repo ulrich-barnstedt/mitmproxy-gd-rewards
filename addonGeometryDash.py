@@ -1,53 +1,82 @@
 import base64
 import hashlib
 
+GD_XOR_KEY_REWARDS = "59812"
+GD_SALT_REWARDS = "pC26fpYaQCtg"
+DEBUG_CONTENTS = True
+
+
 def xor_str(s: str, key: str) -> str:
     return "".join(
         chr(ord(c) ^ ord(key[i % len(key)]))
         for i, c in enumerate(s)
     )
 
+def decode_response(response: str) -> tuple[str, list[str]]:
+    raw_response, _hash = response.split("|")
+    prefix = raw_response[:5]
+    response_encoded = raw_response[5:]
 
-def gdhook(input_value: str) -> str:
-    input_parts = input_value.split("|")
-    input_raw = input_parts[0][5:]
-    decoded = base64.urlsafe_b64decode(input_raw).decode("latin1")
-    input_decoded = xor_str(decoded, "59182")
+    response_encrypted = base64.urlsafe_b64decode(response_encoded).decode()
+    response_content = xor_str(response_encrypted, GD_XOR_KEY_REWARDS)
+    response_parts = response_content.split(":")
 
-    content = input_decoded.split(":")
-    # small chest
-    # content[5] = "0" 
-    content[6] = "2500000,40000,6,6"
-    # large chest
-    # content[8] = "0"
-    content[9] = "2500000,40000,6,6"
-    # number increments
-    # if content[11] == "1":
-    #     content[7] = str(int(content[7]) + 1)
-    # if content[11] == "2":
-    #     content[10] = str(int(content[10]) + 1)
-    print(content)
+    return prefix, response_parts
 
+def encode_response(prefix: str, content: list[str]):
     output_plain = ":".join(content)
-    prefix = input_parts[0][:5]
-    xor_encoded = xor_str(output_plain, "59182")
-    output_enc = base64.urlsafe_b64encode(xor_encoded.encode("latin1")).decode()
+    output_encoded = xor_str(output_plain, GD_XOR_KEY_REWARDS)
+    output_encrypted = base64.urlsafe_b64encode(output_encoded.encode()).decode()
 
-    magic_suffix = "pC26fpYaQCtg"
     sha1 = hashlib.sha1()
-    sha1.update((output_enc + magic_suffix).encode())
+    sha1.update((output_encrypted + GD_SALT_REWARDS).encode())
     hash_value = sha1.hexdigest()
 
-    return prefix + output_enc + "|" + hash_value
+    return prefix + output_encrypted + "|" + hash_value
 
 
 class GDRewards:
+    def __init__(self, orbs: str, gems: str, item1: str, item2: str, modify_time: bool):
+        self.modify_time = modify_time
+        self.content_string = f"{orbs},{gems},{item1},{item2}"
+
+    def __modify(self, original_response: str) -> str:
+        prefix, content = decode_response(original_response)
+
+        if DEBUG_CONTENTS:
+            print("DEBUG: original contents: ", content)
+
+        # overwrite contents
+        content[6] = self.content_string
+        content[9] = self.content_string
+
+        if self.modify_time:
+            # set remaining time to 0
+            content[5] = "0"
+            content[8] = "0"
+
+            # handle opening of chests by incrementing counter
+            if content[11] == "1":
+                content[7] = str(int(content[7]) + 1)
+            if content[11] == "2":
+                content[10] = str(int(content[10]) + 1)
+
+        if DEBUG_CONTENTS:
+            print("DEBUG: modified contents: ", content)
+
+        return encode_response(prefix, content)
+
+    # mitmproxy response hook
     def response(self, flow):
-        if "getGJRewards.php" not in flow.request.url:
+        if "/getGJRewards.php" not in flow.request.url:
             return
 
-        str_content = flow.response.content.decode("utf-8")
-        flow.response.set_content(gdhook(str_content).encode())
+        response_content = flow.response.content.decode()
+        rewritten_content = self.__modify(response_content).encode()
 
-addons = [GDRewards()]
+        flow.response.set_content(rewritten_content)
 
+
+addons = [
+    GDRewards("100", "10", "6", "6", False)
+]
