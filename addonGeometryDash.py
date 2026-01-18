@@ -1,8 +1,9 @@
 import base64
 import hashlib
 
-GD_XOR_KEY_REWARDS = "59812"
+GD_XOR_KEY_REWARDS = "59182"
 GD_SALT_REWARDS = "pC26fpYaQCtg"
+GD_URL_REWARDS = "www.boomlings.com/database/getGJRewards.php"
 DEBUG_CONTENTS = True
 
 
@@ -68,7 +69,7 @@ class GDRewards:
 
     # mitmproxy response hook
     def response(self, flow):
-        if "/getGJRewards.php" not in flow.request.url:
+        if GD_URL_REWARDS not in flow.request.pretty_url:
             return
 
         response_content = flow.response.content.decode()
