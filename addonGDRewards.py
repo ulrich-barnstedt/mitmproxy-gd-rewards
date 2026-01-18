@@ -79,5 +79,11 @@ class GDRewards:
 
 
 addons = [
-    GDRewards("100", "10", "6", "6", False)
+    GDRewards(
+        "100",  # orbs
+        "10",   # gems
+        "6",    # item 1
+        "6",    # item 2
+        False   # modify_time
+    )
 ]

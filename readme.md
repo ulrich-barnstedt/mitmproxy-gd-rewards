@@ -1,4 +1,4 @@
-# mitmproxy-Addon: Geometry Dash rewards
+# mitmproxy Addon: Geometry Dash rewards
 
 _This script is an addon for [mitmproxy](https://www.mitmproxy.org/)._  
 
@@ -15,13 +15,25 @@ The script can be loaded as a mitmproxy addon by using:
 mitmweb -s addonGDRewards.py
 ```
 
-The content of both chests can be changed at the end of `addonGDRewards.py`:
+When in use, the script automatically re-writes the response from the GD server, to the values set at the end of `addonGDRewards.py`.
+
+### Configuring values
+
+Each chest has 4 different slots for items:
+1. Any amount of orbs
+2. Any amount of gems
+3. One special item
+4. One special item
+
+See [Item IDs](#item-ids) below for the IDs of special items.
+
+The values, which both chests are set to, are defined at the end of `addonGDRewards.py`:
 ```python
 addons = [
     GDRewards(
         "100",  # orbs
         "10",   # gems
-        "6",    # item 1 (see item IDs below)
+        "6",    # item 1
         "6",    # item 2
         False   # modify time (see time modification below)
     )
@@ -30,11 +42,6 @@ addons = [
 
 ### Item IDs
 
-Chests have 4 different slots for items:
-- Any amount of orbs
-- Any amount of gems
-- One special item
-- One special item
 
 The IDs of special items are:
 
