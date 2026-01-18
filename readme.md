@@ -15,7 +15,9 @@ The script can be loaded as a mitmproxy addon by using:
 mitmweb -s addonGDRewards.py
 ```
 
-When in use, the script automatically re-writes the response from the GD server, to the values set at the end of `addonGDRewards.py`.
+When in use, the script automatically re-writes the response from the GD server, to the values set in `addonGDRewards.py`.
+
+Note: GD does not properly check SSL Certificates, meaning you do **not** have to install mitmproxy certificates to use mitmproxy with GD.
 
 ### Configuring values
 
@@ -93,8 +95,8 @@ When fetching daily rewards, GD queries `www.boomlings.com/database/getGJRewards
 ### Encryption keys
 
 GD obfuscates the content of the response by using:
-- XORing
-- Appending special salts
+- XOR
+- Special salts
 
 Corresponding to the version used to test the addon, following keys are used:
 
